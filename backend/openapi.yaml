@@ -1,0 +1,378 @@
+openapi: 3.0.0
+info:
+  title: CHSpace.ke E-commerce API
+  version: 1.0.0
+  description: RESTful API for an e-commerce platform including user auth, product, wishlist, order, and payment modules.
+servers:
+  - url: http://localhost:5000/api
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+  - name: Product
+  - name: Wishlist
+  - name: Order
+  - name: Payment
+
+paths:
+  /user/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                mobile:
+                  type: string
+                password:
+                  type: string
+                  format: password
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json: {}
+
+  /user/login:
+    post:
+      tags: [Auth]
+      summary: Login existing user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json: {}
+
+  /user/profile:
+    get:
+      tags: [Auth]
+      summary: Get logged-in user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json: {}
+
+  /product/get-all-products:
+    get:
+      tags: [Product]
+      summary: Get all products
+      responses:
+        '200':
+          description: List of products
+          content:
+            application/json: {}
+
+  /product/get-product-by-id/{productId}:
+    get:
+      tags: [Product]
+      summary: Get a product by ID
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json: {}
+
+  /product/create-product:
+    post:
+      tags: [Product]
+      summary: Create a new product
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                brand:
+                  type: string
+                model:
+                  type: string
+                price:
+                  type: number
+                mrp:
+                  type: number
+                discount:
+                  type: number
+                colorOptions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      hexCode:
+                        type: string
+                selectedColor:
+                  type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+                rating:
+                  type: number
+                reviewsCount:
+                  type: integer
+                exchangeOffer:
+                  type: object
+                  properties:
+                    maxDiscount:
+                      type: number
+                    isAvailable:
+                      type: boolean
+                emiOption:
+                  type: object
+                  properties:
+                    monthly:
+                      type: number
+                    duration:
+                      type: string
+                inStock:
+                  type: boolean
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json: {}
+
+  /product/update-product/{productId}:
+    put:
+      tags: [Product]
+      summary: Update product details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object  # You could copy the same object schema from above for consistency
+      responses:
+        '200':
+          description: Product updated successfully
+          content:
+            application/json: {}
+
+  /product/delete-product/{productId}:
+    delete:
+      tags: [Product]
+      summary: Delete a product by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product deleted successfully
+          content:
+            application/json: {}
+
+  /wishlist:
+    get:
+      tags: [Wishlist]
+      summary: Get user's wishlist
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Wishlist items
+          content:
+            application/json: {}
+    post:
+      tags: [Wishlist]
+      summary: Add product to wishlist
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId]
+              properties:
+                productId:
+                  type: string
+      responses:
+        '200':
+          description: Product added to wishlist
+          content:
+            application/json: {}
+
+  /wishlist/{productId}:
+    delete:
+      tags: [Wishlist]
+      summary: Remove product from wishlist
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Product removed from wishlist
+          content:
+            application/json: {}
+
+  /order:
+    post:
+      tags: [Order]
+      summary: Place a new order
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [products, estimatedArrival]
+              properties:
+                products:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      product:
+                        type: string
+                      quantity:
+                        type: integer
+                      color:
+                        type: string
+                      price:
+                        type: number
+                estimatedArrival:
+                  type: string
+                  format: date-time
+      responses:
+        '201':
+          description: Order placed
+          content:
+            application/json: {}
+    get:
+      tags: [Order]
+      summary: Get all orders
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json: {}
+
+  /order/{orderId}:
+    get:
+      tags: [Order]
+      summary: Get specific order details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json: {}
+
+  /payment:
+    post:
+      tags: [Payment]
+      summary: Process payment for an order
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [orderId, paymentMethod, cardHolderName, cardNumber, email]
+              properties:
+                orderId:
+                  type: string
+                paymentMethod:
+                  type: string
+                cardHolderName:
+                  type: string
+                email:
+                  type: string
+                cardNumber:
+                  type: string
+      responses:
+        '200':
+          description: Payment successful
+          content:
+            application/json: {}
+
+  /payment/{orderId}:
+    get:
+      tags: [Payment]
+      summary: Get payment details by orderId
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payment info retrieved
+          content:
+            application/json: {}
