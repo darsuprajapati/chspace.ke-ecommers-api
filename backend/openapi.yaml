@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: CHSpace.ke E-commerce API
+  title: Chspace.ke E-commerce API
   version: 1.0.0
   description: RESTful API for an e-commerce platform including user auth, product, wishlist, order, and payment modules.
 servers:
