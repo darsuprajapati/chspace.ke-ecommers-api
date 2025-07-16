@@ -19,7 +19,7 @@ connectDB();
 // API routes
 app.use("/api", route);
 
-// Serve Swagger static files
+// Serve Swagger static files (CSS, JS, etc.)
 app.use("/swagger", express.static(path.join(__dirname, "public/swagger")));
 
 // Load OpenAPI YAML
@@ -31,8 +31,21 @@ app.get("/swagger/swagger.json", (req, res) => {
   res.send(swaggerDocument);
 });
 
-// Serve Swagger UI HTML
+// Serve Swagger UI HTML at /api-docs
 app.get("/api-docs", (req, res) => {
+  const swaggerHTML = fs.readFileSync(
+    path.join(__dirname, "swagger-template.html"),
+    "utf8"
+  );
+  const renderedHTML = swaggerHTML.replace(
+    "SWAGGER_JSON_URL",
+    "/swagger/swagger.json"
+  );
+  res.send(renderedHTML);
+});
+
+// ✅ Also serve Swagger UI HTML at root "/"
+app.get("/", (req, res) => {
   const swaggerHTML = fs.readFileSync(
     path.join(__dirname, "swagger-template.html"),
     "utf8"
@@ -50,5 +63,5 @@ app.get("/api-docs", (req, res) => {
 //   console.log(`🚀 Server is running on http://localhost:${PORT}/api-docs`);
 // });
 
-// ✅ Export app for Vercel
+// Export app for Vercel
 module.exports = app;
