@@ -3,6 +3,7 @@ info:
   title: Chspace.ke E-commerce API
   version: 1.0.0
   description: RESTful API for an e-commerce platform including user auth, product, wishlist, order, and payment modules.
+
 servers:
   - url: https://chspace-ke-ecommers-api.vercel.app/api
 
@@ -120,7 +121,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -136,39 +137,29 @@ paths:
                   type: number
                 discount:
                   type: number
-                colorOptions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      hexCode:
-                        type: string
                 selectedColor:
                   type: string
                 images:
                   type: array
                   items:
                     type: string
+                    format: binary
                 rating:
                   type: number
                 reviewsCount:
                   type: integer
+                colorOptions:
+                  type: string
+                  description: JSON string of color options
+                  example: '[{"name":"Red","hexCode":"#FF0000"}]'
                 exchangeOffer:
-                  type: object
-                  properties:
-                    maxDiscount:
-                      type: number
-                    isAvailable:
-                      type: boolean
+                  type: string
+                  description: JSON string of exchange offer
+                  example: '{"maxDiscount":1000,"isAvailable":true}'
                 emiOption:
-                  type: object
-                  properties:
-                    monthly:
-                      type: number
-                    duration:
-                      type: string
+                  type: string
+                  description: JSON string of EMI option
+                  example: '{"monthly":500,"duration":"6 months"}'
                 inStock:
                   type: boolean
       responses:
@@ -193,7 +184,8 @@ paths:
         content:
           application/json:
             schema:
-              type: object  # You could copy the same object schema from above for consistency
+              type: object
+              # Same properties as /create-product, or simplified as needed
       responses:
         '200':
           description: Product updated successfully
