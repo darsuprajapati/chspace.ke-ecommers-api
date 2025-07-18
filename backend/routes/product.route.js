@@ -17,7 +17,22 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const upload = multer({ storage });
+// Set file size limit to 2MB (2 * 1024 * 1024 bytes)
+const upload = multer({ 
+  storage, 
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+}); 
+
+// Multer error handler for file size limit
+function multerErrorHandler(err, req, res, next) {
+  if (err && err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(400).json({
+      success: false,
+      message: 'Image size should not exceed 2MB.'
+    });
+  }
+  next(err);
+}
 
 // Joi validation schemas
 const createProductSchema = Joi.object({
@@ -147,7 +162,7 @@ router.get("/get-all-products", productController.getAllProducts);
 router.get("/get-product-by-id/:id", productController.getProductById);
 
 // Protected routes (authentication required)
-router.post('/create-product', authenticateToken, upload.array('images'), productController.createProduct);
+router.post('/create-product', authenticateToken, upload.array('images'), multerErrorHandler, productController.createProduct);
 router.put("/update-product/:id", authenticateToken, validator.body(updateProductSchema), productController.updateProduct);
 router.delete("/delete-product/:id", authenticateToken, productController.deleteProduct);
 
