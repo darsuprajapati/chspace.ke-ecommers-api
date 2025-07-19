@@ -5,7 +5,7 @@ info:
   description: RESTful API for an e-commerce platform including user auth, product, wishlist, order, and payment modules.
 
 servers:
-  - url: https://chspace-ke-ecommers-api.vercel.app/api
+  - url: http://chspace-ke-ecommers-api.vercel.app/api
 
 components:
   securitySchemes:
