@@ -150,18 +150,16 @@ paths:
                   type: integer
                 colorOptions:
                   type: string
-                  description: JSON string of color options
-                  example: '[{"name":"Red","hexCode":"#FF0000"}]'
+                  description: JSON stringified array like '[{"name":"Red","hexCode":"#FF0000"}]'
                 exchangeOffer:
                   type: string
-                  description: JSON string of exchange offer
-                  example: '{"maxDiscount":1000,"isAvailable":true}'
+                  description: JSON stringified object like '{"maxDiscount":1000,"isAvailable":true}'
                 emiOption:
                   type: string
-                  description: JSON string of EMI option
-                  example: '{"monthly":500,"duration":"6 months"}'
+                  description: JSON stringified object like '{"monthly":500,"duration":"6 months"}'
                 inStock:
                   type: boolean
+
       responses:
         '201':
           description: Product created
@@ -181,11 +179,46 @@ paths:
           schema:
             type: string
       requestBody:
+        required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
-              # Same properties as /create-product, or simplified as needed
+              properties:
+                name:
+                  type: string
+                brand:
+                  type: string
+                model:
+                  type: string
+                price:
+                  type: number
+                mrp:
+                  type: number
+                discount:
+                  type: number
+                selectedColor:
+                  type: string
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                rating:
+                  type: number
+                reviewsCount:
+                  type: integer
+                colorOptions:
+                  type: string
+                  description: JSON stringified array like '[{"name":"Red","hexCode":"#FF0000"}]'
+                exchangeOffer:
+                  type: string
+                  description: JSON stringified object like '{"maxDiscount":1000,"isAvailable":true}'
+                emiOption:
+                  type: string
+                  description: JSON stringified object like '{"monthly":500,"duration":"6 months"}'
+                inStock:
+                  type: boolean
       responses:
         '200':
           description: Product updated successfully

@@ -10,29 +10,51 @@ const { authenticateToken } = require("../middlewares/auth");
 
 // Remove local disk storage and use CloudinaryStorage
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'ecommerce',
-    allowed_formats: ['jpg', 'jpeg', 'png'],
-  },
+    cloudinary: cloudinary,
+    params: {
+        folder: 'ecommerce',
+        allowed_formats: ['jpg', 'jpeg', 'png'],
+    },
 });
 
 // Set file size limit to 2MB (2 * 1024 * 1024 bytes)
-const upload = multer({ 
-  storage, 
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
-}); 
+const upload = multer({
+    storage,
+    limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+});
 
 // Multer error handler for file size limit
 function multerErrorHandler(err, req, res, next) {
-  if (err && err.code === 'LIMIT_FILE_SIZE') {
-    return res.status(400).json({
-      success: false,
-      message: 'Image size should not exceed 2MB.'
-    });
-  }
-  next(err);
+    if (err && err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+            success: false,
+            message: 'Image size should not exceed 2MB.'
+        });
+    }
+    next(err);
 }
+
+const parseJSONFieldsMiddleware = (req, res, next) => {
+    try {
+        if (req.body.colorOptions && typeof req.body.colorOptions === 'string') {
+            req.body.colorOptions = JSON.parse(req.body.colorOptions);
+        }
+        if (req.body.exchangeOffer && typeof req.body.exchangeOffer === 'string') {
+            req.body.exchangeOffer = JSON.parse(req.body.exchangeOffer);
+        }
+        if (req.body.emiOption && typeof req.body.emiOption === 'string') {
+            req.body.emiOption = JSON.parse(req.body.emiOption);
+        }
+    } catch (err) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid JSON format in one of the fields',
+            error: err.message,
+        });
+    }
+    next();
+};
+
 
 // Joi validation schemas
 const createProductSchema = Joi.object({
@@ -64,12 +86,6 @@ const createProductSchema = Joi.object({
         }),
     discount: Joi.number()
         .optional(),
-    colorOptions: Joi.array()
-        .items(Joi.object({
-            name: Joi.string(),
-            hexCode: Joi.string().optional()
-        }))
-        .optional(),
     selectedColor: Joi.string()
         .optional(),
     images: Joi.array()
@@ -89,14 +105,30 @@ const createProductSchema = Joi.object({
         .messages({
             "number.min": "Reviews count cannot be negative"
         }),
-    exchangeOffer: Joi.object({
-        maxDiscount: Joi.number().optional(),
-        isAvailable: Joi.boolean().optional()
-    }).optional(),
-    emiOption: Joi.object({
-        monthly: Joi.number().optional(),
-        duration: Joi.string().optional()
-    }).optional(),
+    colorOptions: Joi.alternatives().try(
+        Joi.array().items(Joi.object({
+            name: Joi.string().required(),
+            hexCode: Joi.string().optional()
+        })),
+        Joi.string()
+    ).optional(),
+
+    exchangeOffer: Joi.alternatives().try(
+        Joi.object({
+            maxDiscount: Joi.number().optional(),
+            isAvailable: Joi.boolean().optional()
+        }),
+        Joi.string()
+    ).optional(),
+
+    emiOption: Joi.alternatives().try(
+        Joi.object({
+            monthly: Joi.number().optional(),
+            duration: Joi.string().optional()
+        }),
+        Joi.string()
+    ).optional(),
+
     inStock: Joi.boolean()
         .optional()
 });
@@ -120,12 +152,10 @@ const updateProductSchema = Joi.object({
         }),
     discount: Joi.number()
         .optional(),
-    colorOptions: Joi.array()
-        .items(Joi.object({
-            name: Joi.string(),
-            hexCode: Joi.string().optional()
-        }))
-        .optional(),
+    colorOptions: Joi.array().items(Joi.object({
+        name: Joi.string(),
+        hexCode: Joi.string().optional()
+    })).optional(),
     selectedColor: Joi.string()
         .optional(),
     images: Joi.array()
@@ -162,8 +192,23 @@ router.get("/get-all-products", productController.getAllProducts);
 router.get("/get-product-by-id/:id", productController.getProductById);
 
 // Protected routes (authentication required)
-router.post('/create-product', authenticateToken, upload.array('images'), multerErrorHandler, productController.createProduct);
-router.put("/update-product/:id", authenticateToken, validator.body(updateProductSchema), productController.updateProduct);
+router.post('/create-product',
+    authenticateToken,
+    upload.array('images'),
+    multerErrorHandler,               // 👈 move it here
+    parseJSONFieldsMiddleware,
+    validator.body(createProductSchema),
+    productController.createProduct
+);
+
+router.put("/update-product/:id",
+    authenticateToken,
+    upload.array('images'),        // ⬅️ To handle image updates
+    multerErrorHandler,
+    parseJSONFieldsMiddleware,
+    validator.body(updateProductSchema),
+    productController.updateProduct
+);
 router.delete("/delete-product/:id", authenticateToken, productController.deleteProduct);
 
 module.exports = router; 
