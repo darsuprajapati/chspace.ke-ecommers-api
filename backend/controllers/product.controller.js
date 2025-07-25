@@ -131,20 +131,87 @@ module.exports = {
   // Get all products
   // ------------------------------
   getAllProducts: async (req, res) => {
-    try {
-      const products = await Product.find().sort({ createdAt: -1 });
-      res.status(200).json({
-        success: true,
-        data: products
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: "Failed to fetch products",
-        error: error.message
-      });
-    }
-  },
+        try {
+            const { page = 1, limit = 10, brand, search, inStock, minPrice, maxPrice, minRating, maxRating } = req.query;
+            
+            let query = {};
+            
+            // Filter by brand
+            if (brand) {
+                query.brand = brand;
+            }
+            
+            // Filter by stock status
+            if (inStock !== undefined) {
+                query.inStock = inStock === 'true';
+            }
+
+            // Filter by price range
+            if (minPrice || maxPrice) {
+                query.price = {};
+                if (minPrice) query.price.$gte = parseFloat(minPrice);
+                if (maxPrice) query.price.$lte = parseFloat(maxPrice);
+            }
+
+            // Filter by rating range
+            if (minRating || maxRating) {
+                query.rating = {};
+                if (minRating) query.rating.$gte = parseFloat(minRating);
+                if (maxRating) query.rating.$lte = parseFloat(maxRating);
+            }
+            
+            // Search across text fields only
+            if (search) {
+                query.$or = [
+                    { name: { $regex: search, $options: 'i' } },
+                    { brand: { $regex: search, $options: 'i' } },
+                    { model: { $regex: search, $options: 'i' } },
+                    { selectedColor: { $regex: search, $options: 'i' } },
+                    { 'colorOptions.name': { $regex: search, $options: 'i' } },
+                    { 'colorOptions.hexCode': { $regex: search, $options: 'i' } },
+                    { 'emiOption.duration': { $regex: search, $options: 'i' } }
+                ];
+            }
+
+            const skip = (page - 1) * limit;
+            
+            const products = await Product.find(query)
+                .limit(parseInt(limit))
+                .skip(skip)
+                .sort({ createdAt: -1 });
+
+            const total = await Product.countDocuments(query);
+
+            res.status(200).json({
+                success: true,
+                message: "Products retrieved successfully",
+                data: products,
+                pagination: {
+                    currentPage: parseInt(page),
+                    totalPages: Math.ceil(total / limit),
+                    totalProducts: total,
+                    productsPerPage: parseInt(limit)
+                },
+                filters: {
+                    search: search || null,
+                    brand: brand || null,
+                    inStock: inStock || null,
+                    minPrice: minPrice || null,
+                    maxPrice: maxPrice || null,
+                    minRating: minRating || null,
+                    maxRating: maxRating || null
+                }
+            });
+
+        } catch (error) {
+            console.error("Get all products error:", error);
+            res.status(500).json({
+                success: false,
+                message: "Internal server error",
+                error: error.message
+            });
+        }
+    },
 
   // ------------------------------
   // Get product by ID
